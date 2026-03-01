@@ -6,11 +6,12 @@ const User = require('../models/User');
 exports.register = async (req, res) => {
     try {
         const { name, email, password, role } = req.body;
-        const existingUser = await User.findOne({ email });
+        const normalizedEmail = email?.trim().toLowerCase();
+        const existingUser = await User.findOne({ email: normalizedEmail });
         if (existingUser) {
             return res.status(400).json({ success: false, message: 'Email already registered' });
         }
-        const user = await User.create({ name, email, password, role: role || 'viewer' });
+        const user = await User.create({ name, email: normalizedEmail, password, role: role || 'viewer' });
         const token = user.generateToken();
         res.status(201).json({
             success: true,
@@ -30,7 +31,8 @@ exports.login = async (req, res) => {
         if (!email || !password) {
             return res.status(400).json({ success: false, message: 'Please provide email and password' });
         }
-        const user = await User.findOne({ email }).select('+password');
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail }).select('+password');
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
